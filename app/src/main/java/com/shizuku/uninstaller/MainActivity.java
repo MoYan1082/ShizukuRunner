@@ -53,7 +53,6 @@ public class MainActivity extends Activity {
         sp = getSharedPreferences("data", 0);
         //如果是初次开启，则展示help界面
         if (sp.getBoolean("first", true)) {
-            showHelp();
             sp.edit().putBoolean("first", false).apply();
         }
         //读取用户设置“是否隐藏后台”，并进行隐藏后台
@@ -73,7 +72,7 @@ public class MainActivity extends Activity {
 
         //设置猫猫图案的长按事件为展示帮助界面
         binding.logo.setOnLongClickListener(view -> {
-            showHelp();
+
             return false;
         });
 
@@ -88,42 +87,6 @@ public class MainActivity extends Activity {
 
         //为两列listView适配每个item的具体样式和总item数
         initlist();
-    }
-
-    private void showHelp() {
-        //展示帮助界面
-        DialogHelpBinding helpBinding = DialogHelpBinding.inflate(LayoutInflater.from(this));
-        helpBinding.preDec.setText(Html.fromHtml("&nbsp;&nbsp;本应用<u><b><big>不会</big></b></u>收集您的任何信息，且完全不包含任何联网功能。继续使用则代表您同意上述隐私政策。<br>&nbsp;&nbsp;使用本应用需要您的设备已安装并激活Shizuku。<br>&nbsp;&nbsp;在后续的使用中，您可以<u><b><big>长按</big></b></u>主界面标题上的猫猫图案(如下图所示)来打开此帮助界面。", 0));
-        helpBinding.usage.setText(Html.fromHtml("&nbsp;&nbsp;--点击编辑某个栏目；长按复制该栏目中保存的命令。<br><br>&nbsp;&nbsp;--<u><b><big>单击</big></b></u>标题上的猫猫图案来切换APP为一次性运行命令的模式。<br><br>&nbsp;&nbsp;--点击主界面标题上的两个显示Shizuku状态的按钮中的任意一个，均可<u><b><big>刷新Shiuzku状态</big></b></u>。当然，关闭再打开本APP也是不错的刷新方法。<br><br>&nbsp;&nbsp;--如果您设备上的Shizuku服务是由root权限启动的，那么本APP在执行命令时也将具有root权限。假如您不希望<u><b><big>以如此高的权限执行命令</big></b></u>(大材小用)，您可以勾选命令编辑界面的“将root权限降至Shell”来让APP仅使用Shell权限执行命令。<br><br>&nbsp;&nbsp;--您可以点击本界面下方的设置按钮探索更多功能哦！", 0));
-        new AlertDialog.Builder(this)
-                .setTitle("使用帮助")
-                .setView(helpBinding.getRoot())
-                .setNegativeButton("OK", null)
-                .setNeutralButton("设置", (dialogInterface, i) -> {
-                    final AlertDialog dialog = new AlertDialog.Builder(this).create();
-                    if (dialog.getWindow() != null) {
-                        dialog.getWindow().getAttributes().alpha = 0.85f;
-                        dialog.getWindow().setGravity(Gravity.BOTTOM);
-                    }
-
-                    DialogSettingsBinding settingsBinding = DialogSettingsBinding.inflate(LayoutInflater.from(this));
-
-                    settingsBinding.notShowBackground.setChecked(sp.getBoolean("hide", true));
-                    settingsBinding.notShowBackground.setOnCheckedChangeListener((compoundButton, b) -> {
-                        sp.edit().putBoolean("hide", b).apply();
-                        ((ActivityManager) getSystemService(Service.ACTIVITY_SERVICE)).getAppTasks().get(0).setExcludeFromRecents(b);
-                    });
-
-                    settingsBinding.moreCommands.setChecked(sp.getBoolean("20", false));
-                    settingsBinding.moreCommands.setOnCheckedChangeListener((compoundButton, b) -> {
-                        sp.edit().putBoolean("20", b).apply();
-                        Toast.makeText(this, "重启APP后生效", Toast.LENGTH_SHORT).show();
-                    });
-                    dialog.setView(settingsBinding.getRoot());
-                    dialog.show();
-                })
-                .create().show();
-
     }
 
     private void check() {
