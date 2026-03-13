@@ -20,6 +20,7 @@ import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.EditorInfo;
@@ -82,11 +83,11 @@ public class MainActivity extends Activity {
         //检查Shizuku是否运行，并申请Shizuku权限
         check();
     }
-
+    
     @Override
-    protected void onUserLeaveHint() {
-        super.onUserLeaveHint();
+    public boolean onTouchEvent(MotionEvent event) {
         startFloatingIcon();
+        return true;
     }
 
     private void startFloatingIcon() {

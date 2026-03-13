@@ -71,12 +71,21 @@
                 style="@style/text.title"
                 android:gravity="center" />
 
-            <TextView
-                android:id="@+id/t2"
-                style="@style/text"
-                android:layout_marginHorizontal="40dp"
-                android:textColor="#00aa00"
-                android:textIsSelectable="true" />
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="horizontal">
+
+                <TextView
+                    android:id="@+id/t2"
+                    style="@style/text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="40dp"
+                    android:textColor="#00aa00"
+                    android:textIsSelectable="true"
+                    android:scrollHorizontally="true" />
+            </HorizontalScrollView>
         </LinearLayout>
     </ScrollView>
 
