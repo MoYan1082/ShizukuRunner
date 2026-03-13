@@ -22,6 +22,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.graphics.Rect;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
@@ -70,8 +71,7 @@ public class MainActivity extends Activity {
         // 强制让窗口宽度占满整个屏幕
         Window window = getWindow();
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
-
-        binding.logo.setOnClickListener(this::change);
+        
         binding.shizukuStatus.setOnClickListener(v -> check());
         binding.exec.setOnClickListener(this::exe);
 
@@ -89,6 +89,25 @@ public class MainActivity extends Activity {
 
         //检查Shizuku是否运行，并申请Shizuku权限
         check();
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
+        if (ev.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+            View v = getCurrentFocus();
+            if (v != null) {
+                Rect outRect = new Rect();
+                v.getGlobalVisibleRect(outRect);
+                if (!outRect.contains((int) ev.getRawX(), (int) ev.getRawY())) {
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                    }
+                    v.clearFocus();
+                }
+            }
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     private void startFloatingIcon() {
@@ -154,37 +173,6 @@ public class MainActivity extends Activity {
     public void onBackPressed() {
         //在点击返回键时直接退出APP，因为APP比较轻量，没必要双击返回退出或者设置什么退出限制
         finish();
-    }
-
-    public void change(View view) {
-        //单击猫猫头像的点击事件，让命令输入框可见。
-
-        flipAnimation(view);
-        binding.execCommandRoot.setVisibility(View.VISIBLE);
-        binding.commandEdit.setEnabled(true);
-        binding.commandEdit.requestFocus();
-        binding.commandEdit.postDelayed(() -> ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(binding.commandEdit, 0), 200);
-        binding.commandEdit.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                exe(v);
-            }
-            return false;
-        });
-        binding.commandEdit.setOnKeyListener((view2, i, keyEvent) -> {
-            if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_ENTER && keyEvent.getAction() == KeyEvent.ACTION_DOWN)
-                exe(view2);
-            return false;
-        });
-
-        view.setOnClickListener(view3 -> change(view3));
-    }
-
-
-    private void flipAnimation(View view) {
-        ObjectAnimator a2 = ObjectAnimator.ofFloat(view, "rotationY", 90f, 0f);
-        a2.setDuration(300);
-        a2.start();
-
     }
 
 
