@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.text.Html;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.animation.LayoutAnimationController;
@@ -50,6 +51,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // this.setFinishOnTouchOutside(false);
+
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         binding = ActivityMainBinding.inflate(LayoutInflater.from(this));
@@ -59,19 +62,9 @@ public class MainActivity extends Activity {
         binding.shizukuStatus.setOnClickListener(v -> check());
         binding.exec.setOnClickListener(this::exe);
 
-        //设置猫猫图案的长按事件为将应用缩小为悬浮小图标
+        //设置猫猫图案的长按事件为手动触发悬浮小图标
         binding.logo.setOnLongClickListener(view -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (!Settings.canDrawOverlays(this)) {
-                    Toast.makeText(this, "请先在设置中开启“在其他应用上层显示”权限", Toast.LENGTH_LONG).show();
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            Uri.parse("package:" + getPackageName()));
-                    startActivity(intent);
-                    return true;
-                }
-            }
-            startService(new Intent(this, FloatingService.class));
-            moveTaskToBack(true);
+            startFloatingIcon();
             return true;
         });
 
@@ -86,6 +79,26 @@ public class MainActivity extends Activity {
 
         //为两列listView适配每个item的具体样式和总item数
         initlist();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        startFloatingIcon();
+        return true;
+    }
+
+    private void startFloatingIcon() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                Toast.makeText(this, "请先在设置中开启“在其他应用上层显示”权限", Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+                return;
+            }
+        }
+        startService(new Intent(this, FloatingService.class));
+        moveTaskToBack(true);
     }
 
     private void check() {
