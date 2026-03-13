@@ -13,7 +13,6 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.Html;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +23,9 @@ import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
 
 import com.shizuku.uninstaller.databinding.ActivityMainBinding;
 import com.shizuku.uninstaller.databinding.DialogHelpBinding;
@@ -70,10 +72,20 @@ public class MainActivity extends Activity {
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
             getWindow().getAttributes().width = (getWindowManager().getDefaultDisplay().getHeight());
 
-        //设置猫猫图案的长按事件为展示帮助界面
+        //设置猫猫图案的长按事件为将应用缩小为悬浮小图标
         binding.logo.setOnLongClickListener(view -> {
-
-            return false;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (!Settings.canDrawOverlays(this)) {
+                    Toast.makeText(this, "请先在设置中开启“在其他应用上层显示”权限", Toast.LENGTH_LONG).show();
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:" + getPackageName()));
+                    startActivity(intent);
+                    return true;
+                }
+            }
+            startService(new Intent(this, FloatingService.class));
+            moveTaskToBack(true);
+            return true;
         });
 
         //shizuku返回授权结果时将执行RL函数
