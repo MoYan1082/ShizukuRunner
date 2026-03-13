@@ -2,25 +2,18 @@ package com.shizuku.uninstaller;
 
 import android.animation.ObjectAnimator;
 import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.AlertDialog;
 import android.app.Service;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.os.Bundle;
-import android.text.Html;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
-import android.view.animation.LayoutAnimationController;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -29,8 +22,6 @@ import android.os.Build;
 import android.provider.Settings;
 
 import com.shizuku.uninstaller.databinding.ActivityMainBinding;
-import com.shizuku.uninstaller.databinding.DialogHelpBinding;
-import com.shizuku.uninstaller.databinding.DialogSettingsBinding;
 
 import rikka.shizuku.Shizuku;
 
@@ -77,8 +68,6 @@ public class MainActivity extends Activity {
         //检查Shizuku是否运行，并申请Shizuku权限
         check();
 
-        //为两列listView适配每个item的具体样式和总item数
-        initlist();
     }
 
     @Override
@@ -138,13 +127,9 @@ public class MainActivity extends Activity {
     }
 
     public void change(View view) {
-        //单击猫猫头像的点击事件，让list变不可见，让EditText可见。
+        //单击猫猫头像的点击事件，让命令输入框可见。
 
         flipAnimation(view);
-        binding.listLeft.setVisibility(View.INVISIBLE);
-        binding.listRight.setVisibility(View.INVISIBLE);
-        binding.listLeft.setAdapter(new ListAdapter(this, new int[]{}));
-        binding.listRight.setAdapter(new ListAdapter(this, new int[]{}));
         binding.execCommandRoot.setVisibility(View.VISIBLE);
         binding.commandEdit.setEnabled(true);
         binding.commandEdit.requestFocus();
@@ -161,22 +146,13 @@ public class MainActivity extends Activity {
             return false;
         });
 
-        view.setOnClickListener(view3 -> {
-            flipAnimation(view3);
-            binding.listLeft.setVisibility(View.VISIBLE);
-            binding.listRight.setVisibility(View.VISIBLE);
-            binding.commandEdit.setEnabled(false);
-            initlist();
-            binding.execCommandRoot.setVisibility(View.GONE);
-            view3.setOnClickListener(this::change);
-        });
+        view.setOnClickListener(view3 -> change(view3));
     }
 
 
     private void flipAnimation(View view) {
-        //flipAnimation是一个轻量级的翻转动画，很有趣哦
         ObjectAnimator a2 = ObjectAnimator.ofFloat(view, "rotationY", 90f, 0f);
-        a2.setDuration(300).setInterpolator(new LinearInterpolator());
+        a2.setDuration(300);
         a2.start();
 
     }
@@ -187,24 +163,5 @@ public class MainActivity extends Activity {
         //EditText右边的执行按钮，点击后的事件
         if (binding.commandEdit.getText().length() > 0)
             startActivity(new Intent(this, ExecActivity.class).putExtra("content", binding.commandEdit.getText().toString()));
-    }
-
-
-    public void initlist() {
-        int[] e1 = new int[]{5, 6, 7, 8, 9};
-        int[] d1 = new int[]{0, 1, 2, 3, 4};
-//        binding.listRight.setAdapter(new ListAdapter(this, e1));
-//        binding.listLeft.setAdapter(new ListAdapter(this, d1));
-
-        //加一点动画，非常的丝滑~~
-        TranslateAnimation animation = new TranslateAnimation(-50f, 0f, -30f, 0f);
-        animation.setDuration(500);
-        LayoutAnimationController controller = new LayoutAnimationController(animation, 0.1f);
-        controller.setOrder(LayoutAnimationController.ORDER_NORMAL);
-        binding.listLeft.setLayoutAnimation(controller);
-        animation = new TranslateAnimation(50f, 0f, -30f, 0f);
-        animation.setDuration(500);
-        controller = new LayoutAnimationController(animation, 0.1f);
-        binding.listRight.setLayoutAnimation(controller);
     }
 }
