@@ -20,11 +20,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ExecActivity"
-            android:exported="true"
-            android:excludeFromRecents="true" />
-
         <service
             android:name=".FloatingService"
             android:exported="false" />

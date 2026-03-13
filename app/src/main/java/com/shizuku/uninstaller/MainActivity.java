@@ -8,27 +8,43 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
-import android.net.Uri;
-import android.os.Build;
-import android.provider.Settings;
 
 import com.shizuku.uninstaller.databinding.ActivityMainBinding;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.util.Locale;
+
 import rikka.shizuku.Shizuku;
+import rikka.shizuku.ShizukuRemoteProcess;
 
 public class MainActivity extends Activity {
 
     ActivityMainBinding binding;
     int shizukuStatusTextCurrentTextColor;
+
+    Process p;
+    Thread h1, h2, h3;
+    boolean br = false;
 
     //shizuku监听授权结果
     private final Shizuku.OnRequestPermissionResultListener RL = this::onRequestPermissionsResult;
@@ -41,8 +57,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // this.setFinishOnTouchOutside(false);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
@@ -67,13 +81,12 @@ public class MainActivity extends Activity {
 
         //检查Shizuku是否运行，并申请Shizuku权限
         check();
-
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
         startFloatingIcon();
-        return true;
     }
 
     private void startFloatingIcon() {
@@ -115,8 +128,23 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        //在APP退出时，取消注册Shizuku授权结果监听，这是Shizuku的要求
         Shizuku.removeRequestPermissionResultListener(RL);
+        br = true;
+        new Handler().postDelayed(() -> {
+            try {
+                if (p != null) {
+                    if (Build.VERSION.SDK_INT >= 26) {
+                        p.destroyForcibly();
+                    } else {
+                        p.destroy();
+                    }
+                }
+                if (h1 != null) h1.interrupt();
+                if (h2 != null) h2.interrupt();
+                if (h3 != null) h3.interrupt();
+            } catch (Exception ignored) {
+            }
+        }, 1000);
         super.onDestroy();
     }
 
@@ -159,9 +187,83 @@ public class MainActivity extends Activity {
 
 
     public void exe(View view) {
+        if (binding.commandEdit.getText().length() > 0) {
+            if (h1 != null && h1.isAlive()) {
+                Toast.makeText(this, "上一个命令还在执行中", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            binding.t1.setText("执行中...");
+            binding.t2.setText("");
+            final String cmd = binding.commandEdit.getText().toString();
+            h1 = new Thread(() -> ShizukuExec(cmd));
+            h1.start();
+        }
+    }
 
-        //EditText右边的执行按钮，点击后的事件
-        if (binding.commandEdit.getText().length() > 0)
-            startActivity(new Intent(this, ExecActivity.class).putExtra("content", binding.commandEdit.getText().toString()));
+    public void ShizukuExec(String cmd) {
+        try {
+            long time = System.currentTimeMillis();
+            p = newProcess(new String[]{"sh"});
+            if (p == null) {
+                runOnUiThread(() -> binding.t1.setText("Shizuku进程创建失败"));
+                return;
+            }
+            OutputStream out = p.getOutputStream();
+            out.write((cmd + "\nexit\n").getBytes());
+            out.flush();
+            out.close();
+
+            h2 = new Thread(() -> {
+                try {
+                    BufferedReader mReader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    String inline;
+                    while ((inline = mReader.readLine()) != null) {
+                        if (binding.t2.length() > 2000 || br) break;
+                        String finalInline = inline;
+                        runOnUiThread(() -> {
+                            binding.t2.append(finalInline);
+                            binding.t2.append("\n");
+                        });
+                    }
+                    mReader.close();
+                } catch (Exception ignored) {
+                }
+            });
+            h2.start();
+
+            h3 = new Thread(() -> {
+                try {
+                    BufferedReader mReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                    String inline;
+                    while ((inline = mReader.readLine()) != null) {
+                        if (binding.t2.length() > 2000 || br) break;
+                        SpannableString ss = new SpannableString(inline + "\n");
+                        ss.setSpan(new ForegroundColorSpan(Color.RED), 0, ss.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        runOnUiThread(() -> binding.t2.append(ss));
+                    }
+                    mReader.close();
+                } catch (Exception ignored) {
+                }
+            });
+            h3.start();
+
+            p.waitFor();
+            String exitValue = String.valueOf(p.exitValue());
+            binding.t1.post(() -> binding.t1.setText(
+                    String.format(Locale.getDefault(), "返回值：%s\n执行用时：%.2f秒",
+                            exitValue, (System.currentTimeMillis() - time) / 1000f)));
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static ShizukuRemoteProcess newProcess(String[] cmd) {
+        try {
+            Method newProcess = Shizuku.class.getDeclaredMethod("newProcess", String[].class, String[].class, String.class);
+            newProcess.setAccessible(true);
+            return (ShizukuRemoteProcess) newProcess.invoke(null, cmd, null, null);
+        } catch (Exception e) {
+            Log.e("MainActivity", "Error creating new process", e);
+            return null;
+        }
     }
 }
