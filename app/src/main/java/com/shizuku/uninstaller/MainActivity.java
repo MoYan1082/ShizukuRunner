@@ -23,6 +23,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -61,8 +62,14 @@ public class MainActivity extends Activity {
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
+        this.setFinishOnTouchOutside(false);
+
         binding = ActivityMainBinding.inflate(LayoutInflater.from(this));
         setContentView(binding.getRoot());
+
+        // 强制让窗口宽度占满整个屏幕
+        Window window = getWindow();
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
 
         binding.logo.setOnClickListener(this::change);
         binding.shizukuStatus.setOnClickListener(v -> check());
@@ -82,12 +89,6 @@ public class MainActivity extends Activity {
 
         //检查Shizuku是否运行，并申请Shizuku权限
         check();
-    }
-    
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        startFloatingIcon();
-        return true;
     }
 
     private void startFloatingIcon() {
