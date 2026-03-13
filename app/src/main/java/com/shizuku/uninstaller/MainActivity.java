@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
 
     ActivityMainBinding binding;
     int shizukuStatusTextCurrentTextColor;
-    SharedPreferences sp;
+
     //shizuku监听授权结果
     private final Shizuku.OnRequestPermissionResultListener RL = this::onRequestPermissionsResult;
 
@@ -49,16 +49,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //根据系统深色模式自动切换软件的深色/亮色主题
-        if (((UiModeManager) getSystemService(Service.UI_MODE_SERVICE)).getNightMode() == UiModeManager.MODE_NIGHT_NO)
-            setTheme(android.R.style.Theme_DeviceDefault_Light_Dialog);
-        sp = getSharedPreferences("data", 0);
-        //如果是初次开启，则展示help界面
-        if (sp.getBoolean("first", true)) {
-            sp.edit().putBoolean("first", false).apply();
-        }
-        //读取用户设置“是否隐藏后台”，并进行隐藏后台
-        ((ActivityManager) getSystemService(Service.ACTIVITY_SERVICE)).getAppTasks().get(0).setExcludeFromRecents(sp.getBoolean("hide", true));
+
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         binding = ActivityMainBinding.inflate(LayoutInflater.from(this));
@@ -67,10 +58,6 @@ public class MainActivity extends Activity {
         binding.logo.setOnClickListener(this::change);
         binding.shizukuStatus.setOnClickListener(v -> check());
         binding.exec.setOnClickListener(this::exe);
-
-        //限定一下横屏时的窗口宽度,让其不铺满屏幕。否则太丑
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
-            getWindow().getAttributes().width = (getWindowManager().getDefaultDisplay().getHeight());
 
         //设置猫猫图案的长按事件为将应用缩小为悬浮小图标
         binding.logo.setOnLongClickListener(view -> {
@@ -191,11 +178,10 @@ public class MainActivity extends Activity {
 
 
     public void initlist() {
-        //根据用户设置，选择展示10个格子或者更多格子
-        int[] e1 = sp.getBoolean("20", false) ? new int[]{5, 6, 7, 8, 9, 15, 16, 17, 18, 19, 25, 26, 27, 28, 29, 35, 36, 37, 38, 39, 45, 46, 47, 48, 49} : new int[]{5, 6, 7, 8, 9};
-        int[] d1 = sp.getBoolean("20", false) ? new int[]{0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 20, 21, 22, 23, 24, 30, 31, 32, 33, 34, 40, 41, 42, 43, 44} : new int[]{0, 1, 2, 3, 4};
-        binding.listRight.setAdapter(new ListAdapter(this, e1));
-        binding.listLeft.setAdapter(new ListAdapter(this, d1));
+        int[] e1 = new int[]{5, 6, 7, 8, 9};
+        int[] d1 = new int[]{0, 1, 2, 3, 4};
+//        binding.listRight.setAdapter(new ListAdapter(this, e1));
+//        binding.listLeft.setAdapter(new ListAdapter(this, d1));
 
         //加一点动画，非常的丝滑~~
         TranslateAnimation animation = new TranslateAnimation(-50f, 0f, -30f, 0f);
