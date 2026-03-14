@@ -28,6 +28,8 @@ public class CommandService extends Service {
 
     private void runWithShizuku(String cmd, String callbackAction, String callbackPackage) {
         try {
+            Log.e("CommandService", "runWithShizuku:" + cmd);
+
             ShizukuRemoteProcess p = newProcess(new String[]{"sh"});
             if (p == null) {
                 Log.e("CommandService", "Shizuku process is null");
