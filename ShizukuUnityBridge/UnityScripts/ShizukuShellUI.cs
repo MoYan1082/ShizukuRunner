@@ -8,16 +8,16 @@ public class ShizukuShellUI : MonoBehaviour
 {
     [Header("显示区域")]
     [Tooltip("距离屏幕边缘的边距")]
-    public int margin = 20;
+    public int margin = 32;
     [Tooltip("结果区域高度占比 (0~1)")]
     [Range(0.2f, 0.9f)]
     public float resultAreaHeight = 0.5f;
     [Tooltip("字体大小")]
-    public int fontSize = 14;
+    public int fontSize = 20;
     [Tooltip("执行按钮宽度")]
-    public int buttonWidth = 120;
+    public int buttonWidth = 160;
     [Tooltip("执行按钮高度")]
-    public int buttonHeight = 48;
+    public int buttonHeight = 56;
 
     private string _lastJson = "";
     private string _stdout = "";
@@ -41,28 +41,30 @@ public class ShizukuShellUI : MonoBehaviour
         int btnH = Mathf.Max(buttonHeight, 36);
 
         // 输入行
-        GUI.Label(new Rect(margin, y, 60, btnH), "命令:");
-        _inputCmd = GUI.TextField(new Rect(margin + 65, y, w - 65 - btnW - 8, btnH), _inputCmd);
+        int labelW = 80;
+        GUI.Label(new Rect(margin, y, labelW, btnH), "命令:");
+        _inputCmd = GUI.TextField(new Rect(margin + labelW + 8, y, w - labelW - 8 - btnW - 8, btnH), _inputCmd);
         if (GUI.Button(new Rect(margin + w - btnW, y, btnW, btnH), "执行"))
             RunShell(_inputCmd);
         y += btnH + 8;
 
-        // 结果区域
+        // 结果区域（只读 Label，避免点击弹出键盘）
         float resultH = (Screen.height - margin - y) * resultAreaHeight;
         string display = _received
             ? $"命令: {_lastCmd}\n退出码: {_exitCode}\n\n--- stdout ---\n{_stdout}\n\n--- stderr ---\n{_stderr}"
             : "执行命令后结果会显示在这里";
 
-        GUIStyle areaStyle = new GUIStyle(GUI.skin.textArea);
-        areaStyle.wordWrap = true;
-        areaStyle.alignment = TextAnchor.UpperLeft;
+        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+        labelStyle.wordWrap = true;
+        labelStyle.alignment = TextAnchor.UpperLeft;
 
+        float contentH = Mathf.Max(resultH, labelStyle.CalcHeight(new GUIContent(display), w - 24) + 20);
         _scrollPos = GUI.BeginScrollView(
             new Rect(margin, y, w, resultH),
             _scrollPos,
-            new Rect(0, 0, w - 24, Mathf.Max(resultH, areaStyle.CalcHeight(new GUIContent(display), w - 24) + 20))
+            new Rect(0, 0, w - 24, contentH)
         );
-        GUI.TextArea(new Rect(0, 0, w - 24, Mathf.Max(resultH, areaStyle.CalcHeight(new GUIContent(display), w - 24) + 20)), display, areaStyle);
+        GUI.Label(new Rect(0, 0, w - 24, contentH), display, labelStyle);
         GUI.EndScrollView();
     }
 

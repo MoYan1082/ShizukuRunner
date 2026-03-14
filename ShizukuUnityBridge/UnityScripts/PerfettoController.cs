@@ -8,10 +8,10 @@ using UnityEngine;
 public class PerfettoController : MonoBehaviour
 {
     [Header("界面")]
-    public int margin = 20;
-    public int buttonWidth = 120;
-    public int buttonHeight = 48;
-    public int fontSize = 16;
+    public int margin = 32;
+    public int buttonWidth = 160;
+    public int buttonHeight = 56;
+    public int fontSize = 20;
     [Tooltip("开始录制后多少秒自动执行一次进程检查")]
     public float checkDelayAfterStart = 2f;
 
@@ -78,20 +78,28 @@ public class PerfettoController : MonoBehaviour
             _statusTime = Time.time;
         }
 
-        y += buttonHeight + 8;
-        if (!string.IsNullOrEmpty(_status) && Time.time - _statusTime < 5f)
-            GUI.Label(new Rect(margin, y, Screen.width - 2 * margin, 24), _status);
-        y += 28;
+        y += buttonHeight + 12;
+        float contentWidth = Screen.width - 2f * margin - 24f; // 留出滚动条宽度
+        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+        labelStyle.wordWrap = true;
 
-        // 检查结果区域
-        GUI.Label(new Rect(margin, y, 200, 22), "进程检查结果 (ps -A | grep perfetto):");
-        y += 24;
-        float areaH = 120;
+        float statusH = labelStyle.CalcHeight(new GUIContent(_status), contentWidth + 24f);
+        if (!string.IsNullOrEmpty(_status) && Time.time - _statusTime < 5f)
+            GUI.Label(new Rect(margin, y, Screen.width - 2 * margin, statusH), _status, labelStyle);
+        y += statusH + 8;
+
+        // 检查结果区域（只读 Label，避免点击弹出键盘）
+        string titleText = "进程检查结果 (ps -A | grep perfetto):";
+        float titleH = labelStyle.CalcHeight(new GUIContent(titleText), contentWidth + 24f);
+        GUI.Label(new Rect(margin, y, Screen.width - 2 * margin, titleH), titleText, labelStyle);
+        y += titleH + 4;
+        float areaH = 140;
         string display = _pendingCheck ? "检查中…" : (string.IsNullOrEmpty(_lastCheckOutput) && string.IsNullOrEmpty(_lastCheckStderr)
             ? "（未检测到 perfetto 进程或尚未检查）"
             : _lastCheckOutput + (string.IsNullOrEmpty(_lastCheckStderr) ? "" : "\n--- stderr ---\n" + _lastCheckStderr));
-        _checkScroll = GUI.BeginScrollView(new Rect(margin, y, Screen.width - 2 * margin, areaH), _checkScroll, new Rect(0, 0, Screen.width - 2 * margin - 20, areaH + 100));
-        GUI.TextArea(new Rect(0, 0, Screen.width - 2 * margin - 20, areaH + 100), display);
+        float contentH = Mathf.Max(areaH, labelStyle.CalcHeight(new GUIContent(display), contentWidth) + 20);
+        _checkScroll = GUI.BeginScrollView(new Rect(margin, y, Screen.width - 2 * margin, areaH), _checkScroll, new Rect(0, 0, contentWidth + 24, contentH));
+        GUI.Label(new Rect(0, 0, contentWidth, contentH), display, labelStyle);
         GUI.EndScrollView();
     }
 
