@@ -12,6 +12,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.os.Process;
 
+import com.example.shizukuunitybridge.UnityShellBridge;
+
 public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecycleEvents
 {
     protected UnityPlayer mUnityPlayer; // don't change the name of this variable; referenced from native code
@@ -40,6 +42,8 @@ public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecyc
         mUnityPlayer = new UnityPlayer(this, this);
         setContentView(mUnityPlayer);
         mUnityPlayer.requestFocus();
+
+        UnityShellBridge.register(this);
     }
 
     // When Unity player unloaded move task to background
@@ -64,6 +68,7 @@ public class UnityPlayerActivity extends Activity implements IUnityPlayerLifecyc
     // Quit Unity
     @Override protected void onDestroy ()
     {
+        UnityShellBridge.unregister();
         mUnityPlayer.destroy();
         super.onDestroy();
     }
