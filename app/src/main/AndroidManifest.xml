@@ -23,6 +23,11 @@
         <service
             android:name=".FloatingService"
             android:exported="false" />
+
+        <!-- 供 Unity / 其他应用通过 Intent 调用执行命令 -->
+        <service
+            android:name=".CommandService"
+            android:exported="true" />
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"
